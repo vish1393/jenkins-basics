@@ -1,3 +1,3 @@
-# jenkins-basics
+# jenkins-basics:
 
 Connecting Git with Jenkins
