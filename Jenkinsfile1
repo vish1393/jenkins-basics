@@ -1,0 +1,17 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Checkout & Environment') {
+            steps {
+                echo 'Pipeline connected to Git repository successfully!'
+                sh 'java -version'
+            }
+        }
+        stage('Build') {
+            steps {
+                echo 'Simulating project build...'
+            }
+        }
+    }
+}
