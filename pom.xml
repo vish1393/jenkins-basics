@@ -67,12 +67,6 @@
 			<version>1.2.7</version>
 			<classifier>mule-plugin</classifier>
 		</dependency>
-		<dependency>
-			<groupId>org.mule.module</groupId>
-			<artifactId>mule-java-module</artifactId>
-			<version>1.2.16</version>
-			<classifier>mule-plugin</classifier>
-		</dependency>
 	</dependencies>
 
 	<repositories>
