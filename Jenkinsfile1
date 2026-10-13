@@ -20,20 +20,20 @@ pipeline {
             }
         }
 
-        stage('Build & Deploy to Nexus') {
-            steps {
-                echo 'Building JAR and deploying to Nexus repository...'
-                
-                // Use single quotes (''') to pass env vars securely without Groovy interpolation warnings
-                sh '''
-                    mvn clean deploy \
-                    -U \
-                    -DskipTests \
-                    -Dnexus.username=${NEXUS_CREDS_USR} \
-                    -Dnexus.password=${NEXUS_CREDS_PSW}
-                '''
-            }
-        }
+       stage('Build & Deploy to Nexus') {
+		    steps {
+		        echo 'Purging cached Spring dependencies and deploying...'
+		        sh '''
+		            rm -rf ~/.m2/repository/org/springframework/spring-core/5.3.39-spring-framework-5.3.45
+		            
+		            mvn clean deploy \
+		            -U \
+		            -DskipTests \
+		            -Dnexus.username=${NEXUS_CREDS_USR} \
+		            -Dnexus.password=${NEXUS_CREDS_PSW}
+		        '''
+		    }
+		}
     }
 
     post {
