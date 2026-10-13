@@ -5,6 +5,9 @@
 	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
 http://www.mulesoft.org/schema/mule/vm http://www.mulesoft.org/schema/mule/vm/current/mule-vm.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="72980b2c-30d3-48ad-8d0d-835c17484843" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
 	<flow name="sample2Flow" doc:id="9a661737-f3c7-470d-940c-bacfbc54bdae" >
 		<http:listener doc:name="Listener" doc:id="c91c62c1-3033-4e47-97c6-c42af914666e" config-ref="HTTP_Listener_config" path="/asyncTest">
 			<http:response statusCode="202" />
