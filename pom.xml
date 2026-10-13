@@ -17,6 +17,7 @@
 		<mule.maven.plugin.version>4.5.3</mule.maven.plugin.version>
 	</properties>
 
+
 	<!-- Distribution Management for deploying releases to Nexus -->
 	<distributionManagement>
 		<repository>
