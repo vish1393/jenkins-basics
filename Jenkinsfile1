@@ -24,7 +24,6 @@ pipeline {
 		    steps {
 		        echo 'Generating Maven settings and deploying to Nexus...'
 		        sh '''
-		            rm -rf ~/.m2/repository/org/springframework/spring-core/5.3.39-spring-framework-5.3.45
 		
 		            cat <<EOF > settings.xml
 		<settings>
