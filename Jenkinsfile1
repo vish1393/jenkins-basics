@@ -1,6 +1,11 @@
 pipeline {
     agent any
 
+    environment {
+        // References the credential ID created in Jenkins Credentials Manager
+        NEXUS_CREDS = credentials('nexus-credentials-id')
+    }
+
     stages {
         stage('Checkout & Environment') {
             steps {
@@ -8,46 +13,28 @@ pipeline {
                 sh 'java -version'
             }
         }
-        stage('Build') {
-            steps {
-                echo 'Simulating project build...'pipeline {
-    agent any
 
-    environment {
-        // References the ID created in Jenkins Credentials Manager for Nexus
-        NEXUS_CREDS = credentials('nexus-credentials-id')
-    }
-
-    stages {
-        stage('Checkout SCM') {
+        stage('Build & Deploy to Nexus') {
             steps {
-                checkout scm
-            }
-        }
-
-        stage('Build & Publish to Nexus') {
-            steps {
-                script {
-                    echo "Building JAR and deploying to Nexus repository..."
-                    // Maven deploy pushes the built JAR to your Nexus distributionManagement URL
-                    sh """
-                        mvn clean deploy \
-                        -DskipTests \
-                        -Dnexus.username=${NEXUS_CREDS_USR} \
-                        -Dnexus.password=${NEXUS_CREDS_PSW}
-                    """
-                }
+                echo 'Building JAR and deploying to Nexus repository...'
+                
+                // Runs Maven deploy using credentials from Jenkins store
+                sh """
+                    mvn clean deploy \
+                    -DskipTests \
+                    -Dnexus.username=${NEXUS_CREDS_USR} \
+                    -Dnexus.password=${NEXUS_CREDS_PSW}
+                """
             }
         }
     }
 
     post {
         success {
-            echo "Artifact successfully stored in local Nexus!"
+            echo 'Artifact successfully stored in local Nexus!'
         }
-    }
-}
-            }
+        failure {
+            echo 'Pipeline failed. Check build logs above.'
         }
     }
 }
