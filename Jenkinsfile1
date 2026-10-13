@@ -22,14 +22,24 @@ pipeline {
 
        stage('Build & Deploy to Nexus') {
 		    steps {
-		        echo 'Deploying artifact to local Nexus repository...'
-		        sh '''		            
-		            mvn clean deploy -U \
-		            -DskipTests \
-		            -Dmaven.deploy.skip=false \
-		            -Dusername=${NEXUS_CREDS_USR} \
-		            -Dpassword=${NEXUS_CREDS_PSW} \
-		            -Dserver.id=nexus-releases
+		        echo 'Generating Maven settings and deploying to Nexus...'
+		        sh '''
+		            rm -rf ~/.m2/repository/org/springframework/spring-core/5.3.39-spring-framework-5.3.45
+		
+		            cat <<EOF > settings.xml
+		<settings>
+		  <servers>
+		    <server>
+		      <id>nexus-releases</id>
+		      <username>${NEXUS_CREDS_USR}</username>
+		      <password>${NEXUS_CREDS_PSW}</password>
+		    </server>
+		  </servers>
+		</settings>
+		EOF
+		
+		            mvn clean deploy -U -s settings.xml -DskipTests
+		            rm -f settings.xml
 		        '''
 		    }
 		}
