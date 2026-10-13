@@ -10,7 +10,43 @@ pipeline {
         }
         stage('Build') {
             steps {
-                echo 'Simulating project build...'
+                echo 'Simulating project build...'pipeline {
+    agent any
+
+    environment {
+        // References the ID created in Jenkins Credentials Manager for Nexus
+        NEXUS_CREDS = credentials('nexus-credentials-id')
+    }
+
+    stages {
+        stage('Checkout SCM') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Build & Publish to Nexus') {
+            steps {
+                script {
+                    echo "Building JAR and deploying to Nexus repository..."
+                    // Maven deploy pushes the built JAR to your Nexus distributionManagement URL
+                    sh """
+                        mvn clean deploy \
+                        -DskipTests \
+                        -Dnexus.username=${NEXUS_CREDS_USR} \
+                        -Dnexus.password=${NEXUS_CREDS_PSW}
+                    """
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo "Artifact successfully stored in local Nexus!"
+        }
+    }
+}
             }
         }
     }

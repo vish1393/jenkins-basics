@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:vm="http://www.mulesoft.org/schema/mule/vm" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/vm http://www.mulesoft.org/schema/mule/vm/current/mule-vm.xsd">
+	<flow name="sample2Flow" doc:id="9a661737-f3c7-470d-940c-bacfbc54bdae" >
+		<http:listener doc:name="Listener" doc:id="c91c62c1-3033-4e47-97c6-c42af914666e" config-ref="HTTP_Listener_config" path="/asyncTest">
+			<http:response statusCode="202" />
+		</http:listener>
+		<logger level="INFO" doc:name="Logger" doc:id="1db52932-e8bc-4bef-beea-f974fb8710e1" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	"message": "Async flow started"&#10;}]'/>
+		<async doc:name="Async" doc:id="ab87d3ee-dca1-432f-86a6-b81a675ef48c">
+			<try doc:name="Try" doc:id="8e91dcdc-45a5-4110-9a6f-987feacb5ff4">
+			<set-variable value="#[%dw 2.0&#10;output application/java&#10;---&#10;1 to 1000]" doc:name="Set Variable" doc:id="5eef5370-78b8-4b21-af6e-6f302f3b6a93" variableName="count" />
+				<foreach doc:name="For Each" doc:id="4eb10a0e-72c9-426a-bd3c-486845668b5f" collection="#[vars.count]">
+				<logger level="INFO" doc:name="Logger" doc:id="ecbb5b96-33f3-484f-b5ee-c409e71f8ccc" message="#[payload]" />
+			</foreach>
+				<raise-error doc:name="Raise error" doc:id="0fcef305-8d23-44cb-83ac-bf4b3104f9d1" type="ANY" description="Sample Async error" />
+				<error-handler>
+				<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="e976f45b-cfee-44a1-88fd-da62e68205bb">
+					<logger level="INFO" doc:name="Logger" doc:id="9020088c-30e8-49e3-bdc1-23af510e2ba6" message='#["Error in Async Block"]' />
+				</on-error-propagate>
+			</error-handler>
+		</try>
+		</async>
+		<set-payload doc:name="Set Payload" doc:id="c165ec31-1e58-4348-92b7-972d2791b209" value='#["Job Completed"]'/>
+	</flow>
+</mule>
