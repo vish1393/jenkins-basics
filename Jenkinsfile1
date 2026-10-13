@@ -27,6 +27,7 @@ pipeline {
                 // Use single quotes (''') to pass env vars securely without Groovy interpolation warnings
                 sh '''
                     mvn clean deploy \
+                    -U \
                     -DskipTests \
                     -Dnexus.username=${NEXUS_CREDS_USR} \
                     -Dnexus.password=${NEXUS_CREDS_PSW}
