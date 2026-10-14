@@ -1,111 +1,32 @@
-pipeline {
-    agent any
-
-    tools {
-        maven 'Maven 3.9'
+stage('Bump Next Patch SNAPSHOT') {
+    when {
+        branch 'master'
     }
-
-    environment {
-        NEXUS_CREDS = credentials('nexus-credentials-id')
-        GIT_CREDS   = credentials('github-credentials-id') // Jenkins Git credentials for tagging
-    }
-
-    stages {
-        stage('Checkout & Versioning') {
-            steps {
-                script {
-                    def branchName = env.BRANCH_NAME ?: 'master' // Defaults to master if single branch pipeline
-                    
-                    if (branchName == 'master' || branchName == 'main') {
-                        echo "Target Branch is [${branchName}]: Preparing RELEASE Build..."
-                        
-                        // Extract base version (e.g., 1.0.0-SNAPSHOT -> 1.0.0)
-                        def currentVersion = sh(script: 'mvn help:evaluate -Dexpression=project.version -q -DforceStdout', returnStdout: true).trim()
-                        def releaseVersion = currentVersion.replace('-SNAPSHOT', '')
-                        
-                        echo "Setting Release Version: ${releaseVersion}"
-                        sh "mvn versions:set -DnewVersion=${releaseVersion} -DgenerateBackupPoms=false"
-                    } else {
-                        echo "Target Branch is [${branchName}]: Preparing SNAPSHOT Build..."
-                        
-                        // Formats branch name safely for Maven (e.g., feature/login -> feature-login)
-                        def safeBranch = branchName.replaceAll(/[^a-zA-Z0-9.-]/, '-')
-                        def snapshotVersion = "1.0.${BUILD_NUMBER}-${safeBranch}-SNAPSHOT"
-                        
-                        echo "Setting Dynamic Snapshot Version: ${snapshotVersion}"
-                        sh "mvn versions:set -DnewVersion=${snapshotVersion} -DgenerateBackupPoms=false"
-                    }
-                }
-            }
-        }
-
-        stage('Build & Deploy to Nexus') {
-            steps {
-                sh '''
-                    cat <<EOF > settings.xml
-<settings>
-  <servers>
-    <server>
-      <id>nexus-releases</id>
-      <username>${NEXUS_CREDS_USR}</username>
-      <password>${NEXUS_CREDS_PSW}</password>
-    </server>
-    <server>
-      <id>nexus-snapshots</id>
-      <username>${NEXUS_CREDS_USR}</username>
-      <password>${NEXUS_CREDS_PSW}</password>
-    </server>
-  </servers>
-</settings>
-EOF
-
-                    mvn clean deploy -U -s settings.xml -DskipTests
-                '''
-            }
-            post {
-                always {
-                    sh 'rm -f settings.xml'
-                }
-            }
-        }
-
-        stage('Git Tag Release') {
-            when {
-                branch 'master'
-            }
-            steps {
-                script {
-                    def releaseVersion = sh(script: 'mvn help:evaluate -Dexpression=project.version -q -DforceStdout', returnStdout: true).trim()
-                    
-                    sh """
-                        git config user.name "Jenkins CI"
-                        git config user.email "ci@example.com"
-                        git tag -a v${releaseVersion} -m "Automated Release v${releaseVersion}"
-                    """
-                    
-                    withCredentials([usernamePassword(credentialsId: 'github-credentials-id', usernameVariable: 'GIT_USER', passwordVariable: 'GIT_PAT')]) {
-                        sh """
-                            git push https://${GIT_PAT}@github.com/your-org/your-repo.git v${releaseVersion}
-                        """
-                    }
-                }
-            }
-        }
-    }
-
-    post {
-        success {
-            echo 'Pipeline executed successfully!'
+    steps {
+        script {
+            // 1. Calculate the next patch version using build-helper
+            // If current is 1.0.0, parsedVersion.nextPatchVersion generates 1.0.1
             sh '''
-                echo "=================================================="
-                echo "Jenkins Workspace Directory : ${WORKSPACE}"
-                echo "Built Artifact Path(s)      :"
-                find target/ -maxdepth 1 -name "*.jar" -exec readlink -f {} \\;
-                echo "=================================================="
+                mvn build-helper:parse-version versions:set \
+                  -DnewVersion=\${parsedVersion.majorVersion}.\${parsedVersion.minorVersion}.\${parsedVersion.nextPatchVersion}-SNAPSHOT \
+                  -DgenerateBackupPoms=false
             '''
-        }
-        failure {
-            echo 'Pipeline failed. Check build logs above.'
+
+            def nextVersion = sh(script: 'mvn help:evaluate -Dexpression=project.version -q -DforceStdout', returnStdout: true).trim()
+            echo "New SNAPSHOT version set to: ${nextVersion}"
+
+            // 2. Commit and push the bumped pom.xml back to GitHub
+            sh """
+                git config user.name "Jenkins CI"
+                git config user.email "ci@example.com"
+                git commit -am "chore: bump version to ${nextVersion} [skip ci]"
+            """
+
+            withCredentials([usernamePassword(credentialsId: 'github-credentials-id', usernameVariable: 'GIT_USER', passwordVariable: 'GIT_PAT')]) {
+                sh """
+                    git push https://${GIT_PAT}@github.com/your-org/your-repo.git HEAD:master
+                """
+            }
         }
     }
 }
