@@ -25,21 +25,21 @@ pipeline {
                 echo 'Generating Maven settings and deploying to Nexus...'
                 sh '''
                     cat <<EOF > settings.xml
-				<settings>
-				  <servers>
-				    <server>
-				      <id>nexus-releases</id>
-				      <username>${NEXUS_CREDS_USR}</username>
-				      <password>${NEXUS_CREDS_PSW}</password>
-				    </server>
-				    <server>
-				      <id>nexus-snapshots</id>
-				      <username>${NEXUS_CREDS_USR}</username>
-				      <password>${NEXUS_CREDS_PSW}</password>
-				    </server>
-				  </servers>
-				</settings>
-				EOF
+<settings>
+  <servers>
+    <server>
+      <id>nexus-releases</id>
+      <username>${NEXUS_CREDS_USR}</username>
+      <password>${NEXUS_CREDS_PSW}</password>
+    </server>
+    <server>
+      <id>nexus-snapshots</id>
+      <username>${NEXUS_CREDS_USR}</username>
+      <password>${NEXUS_CREDS_PSW}</password>
+    </server>
+  </servers>
+</settings>
+EOF
 
                     mvn clean deploy -U -s settings.xml -DskipTests
                 '''
