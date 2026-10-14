@@ -1,7 +1,7 @@
 pipeline {
     agent any
 
-    // Automatically installs and binds the Maven binary path
+    // Automatically installs and binds the Maven binary path:
     tools {
         maven 'Maven 3.9' // Must match the Name configured in Jenkins Tools
     }
