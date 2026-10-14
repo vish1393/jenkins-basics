@@ -1,0 +1,22 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Environment Check') {
+            steps {
+                echo 'Pipeline triggered successfully!'
+                sh 'java -version'
+            }
+        }
+        stage('Simulate Build') {
+            steps {
+                echo 'Building test application...'
+            }
+        }
+    }
+    post {
+        always {
+            echo 'Cleaning up workspace...'
+        }
+    }
+}
