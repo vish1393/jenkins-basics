@@ -21,10 +21,10 @@ pipeline {
         }
 
         stage('Build & Deploy to Nexus') {
-		    steps {
-		        echo 'Generating Maven settings and deploying to Nexus...'
-		        sh '''
-		        	cat <<EOF > settings.xml
+            steps {
+                echo 'Generating Maven settings and deploying to Nexus...'
+                sh '''
+                    cat <<EOF > settings.xml
 				<settings>
 				  <servers>
 				    <server>
@@ -40,16 +40,17 @@ pipeline {
 				  </servers>
 				</settings>
 				EOF
-		
-		            mvn clean deploy -U -s settings.xml -DskipTests
-		        '''
-		    }
-		    post {
-		        always {
-		            sh 'rm -f settings.xml'
-		        }
-		    }
-		}
+
+                    mvn clean deploy -U -s settings.xml -DskipTests
+                '''
+            }
+            post {
+                always {
+                    sh 'rm -f settings.xml'
+                }
+            }
+        }
+    }
 
     post {
         success {
