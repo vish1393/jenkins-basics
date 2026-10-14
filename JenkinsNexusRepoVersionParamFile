@@ -4,8 +4,6 @@ stage('Bump Next Patch SNAPSHOT') {
     }
     steps {
         script {
-            // 1. Calculate the next patch version using build-helper
-            // If current is 1.0.0, parsedVersion.nextPatchVersion generates 1.0.1
             sh '''
                 mvn build-helper:parse-version versions:set \
                   -DnewVersion=\${parsedVersion.majorVersion}.\${parsedVersion.minorVersion}.\${parsedVersion.nextPatchVersion}-SNAPSHOT \
@@ -13,9 +11,7 @@ stage('Bump Next Patch SNAPSHOT') {
             '''
 
             def nextVersion = sh(script: 'mvn help:evaluate -Dexpression=project.version -q -DforceStdout', returnStdout: true).trim()
-            echo "New SNAPSHOT version set to: ${nextVersion}"
 
-            // 2. Commit and push the bumped pom.xml back to GitHub
             sh """
                 git config user.name "Jenkins CI"
                 git config user.email "ci@example.com"
@@ -24,7 +20,7 @@ stage('Bump Next Patch SNAPSHOT') {
 
             withCredentials([usernamePassword(credentialsId: 'github-credentials-id', usernameVariable: 'GIT_USER', passwordVariable: 'GIT_PAT')]) {
                 sh """
-                    git push https://${GIT_PAT}@github.com/your-org/your-repo.git HEAD:master
+                    git push https://${GIT_PAT}@github.com/vish1393/jenkins-basics.git HEAD:master
                 """
             }
         }
