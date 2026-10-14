@@ -13,7 +13,7 @@ pipeline {
     stage('Checkout & Versioning') {
 	    steps {
 	        script {
-	            // Generates a guaranteed unique version using the Jenkins build number
+	            // Generates a guaranteed unique version using the Jenkins build number:
 	            def releaseVersion = "1.0.${BUILD_NUMBER}"
 	            echo "Updating pom.xml to release version: ${releaseVersion}"
 	            
