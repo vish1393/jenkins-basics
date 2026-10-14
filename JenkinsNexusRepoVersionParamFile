@@ -11,32 +11,32 @@ pipeline {
     }
 
     stages {
-        stage('Checkout & Environment') {
-            steps {
-                echo 'Pipeline connected to Git repository successfully!'
-                sh 'java -version'
-                sh 'mvn -version'
-            }
-        }
-
         stage('Checkout & Versioning') {
             steps {
                 script {
                     def branchName = env.BRANCH_NAME ?: 'master'
                     
                     if (branchName == 'master' || branchName == 'main') {
-                        echo "Target Branch is [${branchName}]: Preparing RELEASE Build..."
-                        def currentVersion = sh(script: 'mvn help:evaluate -Dexpression=project.version -q -DforceStdout', returnStdout: true).trim()
-                        def releaseVersion = currentVersion.replace('-SNAPSHOT', '')
+                        // 1. Read base version from pom.xml (e.g., 1.0.0-SNAPSHOT -> 1.0)
+                        def rawVersion = sh(script: 'mvn help:evaluate -Dexpression=project.version -q -DforceStdout', returnStdout: true).trim()
+                        def baseVersion = rawVersion.replace('-SNAPSHOT', '')
                         
-                        echo "Setting Release Version: ${releaseVersion}"
+                        // Extract Major.Minor (e.g., "1.0.0" -> "1.0")
+                        def parts = baseVersion.tokenize('.')
+                        def majorMinor = (parts.size() >= 2) ? "${parts[0]}.${parts[1]}" : baseVersion
+                        
+                        // 2. Generate a guaranteed unique release version using Jenkins BUILD_NUMBER
+                        // Result format: 1.0.<BUILD_NUMBER> (e.g., 1.0.8, 1.0.9, 1.0.10)
+                        def releaseVersion = "${majorMinor}.${BUILD_NUMBER}"
+                        
+                        echo "Setting unique RELEASE Version for master: ${releaseVersion}"
                         sh "mvn versions:set -DnewVersion=${releaseVersion} -DgenerateBackupPoms=false"
                     } else {
-                        echo "Target Branch is [${branchName}]: Preparing SNAPSHOT Build..."
+                        // Dynamic feature branch versioning
                         def safeBranch = branchName.replaceAll(/[^a-zA-Z0-9.-]/, '-')
                         def snapshotVersion = "1.0.${BUILD_NUMBER}-${safeBranch}-SNAPSHOT"
                         
-                        echo "Setting Dynamic Snapshot Version: ${snapshotVersion}"
+                        echo "Setting Dynamic SNAPSHOT Version: ${snapshotVersion}"
                         sh "mvn versions:set -DnewVersion=${snapshotVersion} -DgenerateBackupPoms=false"
                     }
                 }
@@ -90,35 +90,6 @@ EOF
                     withCredentials([usernamePassword(credentialsId: 'github-credentials-id', usernameVariable: 'GIT_USER', passwordVariable: 'GIT_PAT')]) {
                         sh """
                             git push https://${GIT_PAT}@github.com/vish1393/jenkins-basics.git v${releaseVersion}
-                        """
-                    }
-                }
-            }
-        }
-
-        stage('Bump Next Patch SNAPSHOT') {
-            when {
-                branch 'master'
-            }
-            steps {
-                script {
-                    sh '''
-                        mvn build-helper:parse-version versions:set \
-                          -DnewVersion=\${parsedVersion.majorVersion}.\${parsedVersion.minorVersion}.\${parsedVersion.nextPatchVersion}-SNAPSHOT \
-                          -DgenerateBackupPoms=false
-                    '''
-
-                    def nextVersion = sh(script: 'mvn help:evaluate -Dexpression=project.version -q -DforceStdout', returnStdout: true).trim()
-
-                    sh """
-                        git config user.name "Jenkins CI"
-                        git config user.email "ci@example.com"
-                        git commit -am "chore: bump version to ${nextVersion} [skip ci]"
-                    """
-
-                    withCredentials([usernamePassword(credentialsId: 'github-credentials-id', usernameVariable: 'GIT_USER', passwordVariable: 'GIT_PAT')]) {
-                        sh """
-                            git push https://${GIT_PAT}@github.com/vish1393/jenkins-basics.git HEAD:master
                         """
                     }
                 }
