@@ -10,38 +10,17 @@ pipeline {
         GIT_CREDS   = credentials('github-credentials-id')
     }
 
-    stages {
-        stage('Checkout & Versioning') {
-            steps {
-                script {
-                    def branchName = env.BRANCH_NAME ?: 'master'
-                    
-                    if (branchName == 'master' || branchName == 'main') {
-                        // 1. Read base version from pom.xml (e.g., 1.0.0-SNAPSHOT -> 1.0)
-                        def rawVersion = sh(script: 'mvn help:evaluate -Dexpression=project.version -q -DforceStdout', returnStdout: true).trim()
-                        def baseVersion = rawVersion.replace('-SNAPSHOT', '')
-                        
-                        // Extract Major.Minor (e.g., "1.0.0" -> "1.0")
-                        def parts = baseVersion.tokenize('.')
-                        def majorMinor = (parts.size() >= 2) ? "${parts[0]}.${parts[1]}" : baseVersion
-                        
-                        // 2. Generate a guaranteed unique release version using Jenkins BUILD_NUMBER
-                        // Result format: 1.0.<BUILD_NUMBER> (e.g., 1.0.8, 1.0.9, 1.0.10)
-                        def releaseVersion = "${majorMinor}.${BUILD_NUMBER}"
-                        
-                        echo "Setting unique RELEASE Version for master: ${releaseVersion}"
-                        sh "mvn versions:set -DnewVersion=${releaseVersion} -DgenerateBackupPoms=false"
-                    } else {
-                        // Dynamic feature branch versioning
-                        def safeBranch = branchName.replaceAll(/[^a-zA-Z0-9.-]/, '-')
-                        def snapshotVersion = "1.0.${BUILD_NUMBER}-${safeBranch}-SNAPSHOT"
-                        
-                        echo "Setting Dynamic SNAPSHOT Version: ${snapshotVersion}"
-                        sh "mvn versions:set -DnewVersion=${snapshotVersion} -DgenerateBackupPoms=false"
-                    }
-                }
-            }
-        }
+    stage('Checkout & Versioning') {
+	    steps {
+	        script {
+	            // Generates a guaranteed unique version using the Jenkins build number
+	            def releaseVersion = "1.0.${BUILD_NUMBER}"
+	            echo "Updating pom.xml to release version: ${releaseVersion}"
+	            
+	            sh "mvn versions:set -DnewVersion=${releaseVersion} -DgenerateBackupPoms=false"
+	        }
+	    }
+	}
 
         stage('Build & Deploy to Nexus') {
             steps {
