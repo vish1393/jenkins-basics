@@ -18,7 +18,7 @@
 	</properties>
 
 
-	<!-- Distribution Management for deploying releases to Nexus -->
+	<!-- Distribution Management for deploying releases to Nexus  -->
 	<distributionManagement>
 	    <repository>
 	        <id>nexus-releases</id>
